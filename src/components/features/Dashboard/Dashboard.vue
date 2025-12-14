@@ -136,16 +136,16 @@ const handleSave = async () => {
      
      saveState.value = 'success';
      
-     // 如果当前处于排序模式，自动退出排序模式
      if (isSortingNodes.value) isSortingNodes.value = false;
      
-     setTimeout(() => { clearDirty(); saveState.value = 'idle'; }, 1500);
+     setTimeout(() => { saveState.value = 'idle'; }, 1500);
 
   } catch (error) {
      saveState.value = 'idle';
-     // Error handling is done in store, or we can add extra handling here if needed
   }
 };
+
+
 const handleDeleteSubscriptionWithCleanup = (subId) => {
   deleteSubscription(subId);
   cleanupSubscriptions(subId);
@@ -376,11 +376,11 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
 
     <!-- Dirty State Banner -->
     <Transition name="slide-fade">
-      <div v-if="isDirty" class="p-3 mb-6 rounded-lg bg-indigo-600/10 dark:bg-indigo-500/20 ring-1 ring-inset ring-indigo-600/20 flex items-center justify-between">
+      <div v-if="isDirty || saveState === 'success'" class="p-3 mb-6 rounded-lg bg-indigo-600/10 dark:bg-indigo-500/20 ring-1 ring-inset ring-indigo-600/20 flex items-center justify-between">
         <p class="text-sm font-medium text-indigo-800 dark:text-indigo-200">您有未保存的更改</p>
         <div class="flex items-center gap-3">
           <button @click="handleDiscard" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">放弃更改</button>
-          <button @click="handleSave" :disabled="saveState !== 'idle'" class="px-5 py-2 text-sm text-white font-semibold rounded-lg shadow-xs flex items-center justify-center transition-all duration-300 w-28" :class="{'bg-indigo-600 hover:bg-indigo-700': saveState === 'idle', 'bg-gray-500 cursor-not-allowed': saveState === 'saving', 'bg-teal-500 cursor-not-allowed': saveState === 'success' }">
+          <button @click.prevent="handleSave" :disabled="saveState !== 'idle'" class="px-5 py-2 text-sm text-white font-semibold rounded-lg shadow-xs flex items-center justify-center transition-all duration-300 w-28" :class="{'bg-indigo-600 hover:bg-indigo-700': saveState === 'idle', 'bg-gray-500 cursor-not-allowed': saveState === 'saving', 'bg-teal-500 cursor-not-allowed': saveState === 'success' }">
             <div v-if="saveState === 'saving'" class="flex items-center">
               <StatusIndicator status="loading" size="sm" class="mr-2" />
               <span>保存中...</span>

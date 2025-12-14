@@ -4,7 +4,7 @@ import { useToastStore } from './toast';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings';
 
 export const useDataStore = defineStore('data', () => {
-    const toast = useToastStore();
+    const { showToast } = useToastStore();
 
     // 状态
     const subscriptions = ref([]);
@@ -43,7 +43,7 @@ export const useDataStore = defineStore('data', () => {
 
         } catch (error) {
             console.error('Failed to fetch data:', error);
-            toast.error('获取由于网络问题数据失败: ' + error.message);
+            showToast('获取由于网络问题数据失败: ' + error.message, 'error');
             throw error;
         } finally {
             isLoading.value = false;
@@ -51,15 +51,22 @@ export const useDataStore = defineStore('data', () => {
     }
 
     async function saveData() {
-        if (isLoading.value) return;
+        console.log('[Store] saveData called. isLoading:', isLoading.value);
+        if (isLoading.value) {
+            console.warn('[Store] saveData aborted: isLoading is true');
+            toast.warning('操作过于频繁，请稍候...');
+            return;
+        }
 
         isLoading.value = true;
         try {
+            console.log('[Store] saveData: preparing payload...');
             const payload = {
                 misubs: subscriptions.value,
                 profiles: profiles.value
             };
 
+            console.log('[Store] saveData: sending fetch request...');
             const response = await fetch('/api/misubs', {
                 method: 'POST',
                 headers: {
@@ -68,9 +75,11 @@ export const useDataStore = defineStore('data', () => {
                 body: JSON.stringify(payload)
             });
 
+            console.log('[Store] saveData: response status:', response.status);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
             const result = await response.json();
+            console.log('[Store] saveData: result:', result);
 
             if (!result.success) {
                 throw new Error(result.message || '保存失败');
@@ -78,9 +87,11 @@ export const useDataStore = defineStore('data', () => {
 
             toast.success('数据已保存');
             lastUpdated.value = new Date();
+            clearDirty();
+            console.log('[Store] saveData: success, dirty cleared.');
 
         } catch (error) {
-            console.error('Failed to save data:', error);
+            console.error('[Store] Failed to save data:', error);
             toast.error('保存数据失败: ' + error.message);
             throw error;
         } finally {
@@ -108,11 +119,11 @@ export const useDataStore = defineStore('data', () => {
             }
 
             settings.value = { ...settings.value, ...newSettings };
-            toast.success('设置已更新');
+            showToast('设置已更新', 'success');
 
         } catch (error) {
             console.error('Failed to save settings:', error);
-            toast.error('保存设置失败: ' + error.message);
+            showToast('保存设置失败: ' + error.message, 'error');
             throw error;
         } finally {
             isLoading.value = false;
