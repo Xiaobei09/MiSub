@@ -37,6 +37,7 @@ onMounted(() => {
   initTheme();
   checkSession();
 });
+
 </script>
 
 <template>

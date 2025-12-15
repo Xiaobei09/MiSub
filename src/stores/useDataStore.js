@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useToastStore } from './toast';
 import { useSubscriptionStore } from './subscriptions';
 import { useProfileStore } from './profiles';
 import { useSettingsStore } from './settings';
 import { useEditorStore } from './editor';
+import { calculateDiff } from '../lib/diff.js';
+import { DEFAULT_SETTINGS } from '../constants/default-settings.js';
 
 export const useDataStore = defineStore('data', () => {
     const { showToast } = useToastStore();
@@ -19,10 +21,8 @@ export const useDataStore = defineStore('data', () => {
     const subscriptions = computed(() => subscriptionStore.items);
     const profiles = computed(() => profileStore.items);
     const settings = computed(() => settingsStore.config);
-    const isLoading = computed(() => editorStore.isLoading);
-    const isDirty = computed(() => editorStore.isDirty);
-    const lastUpdated = computed(() => editorStore.lastUpdated);
-    const hasDataLoaded = computed(() => !!editorStore.lastUpdated); // Derived helper
+    // Editor state is handled by local refs below to solve the "direct assignment" requirement from instructions
+
 
     // Editor state is now managed directly here or through editorStore, but the instructions imply direct manipulation
     // Let's assume these are now direct refs for the purpose of the instruction,
@@ -48,7 +48,6 @@ export const useDataStore = defineStore('data', () => {
     const activeProfiles = computed(() => profileStore.activeItems);
 
     // --- Actions ---
-    import { calculateDiff } from '../lib/diff.js';
 
     // Snapshot of the data as it was last correctly saved/fetched
     let lastSavedData = {
